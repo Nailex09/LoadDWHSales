@@ -1,5 +1,5 @@
 ﻿
-using LoadDWHSales.Data.Entities.northwind;
+using LoadDWHSales.Data.Entities.Northwind;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

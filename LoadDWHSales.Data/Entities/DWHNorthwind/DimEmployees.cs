@@ -5,11 +5,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LoadDWHSales.Data.Entities.DWSales
 {
-    [Table("DimEmployee")]
-    public class DimEmployee
+    [Table("DimEmployees")]
+    public class DimEmployees
     {
         [Key]
-        public int EmployeeKey { get; set; } // Cambiado de EmployeeID a EmployeeKey
+        public int EmployeeKey { get; set; }
         public int EmployeeID { get; set; }
         public string EmployeeName { get; set; }
     }

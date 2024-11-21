@@ -1,5 +1,5 @@
 ﻿
-namespace LoadDWHSales.Data.Entities.northwind
+namespace LoadDWHSales.Data.Entities.Northwind
 {
     public class Customer
     {

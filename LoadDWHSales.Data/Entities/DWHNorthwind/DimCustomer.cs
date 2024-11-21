@@ -10,6 +10,6 @@ namespace LoadDWHSales.Data.Entities.DWSales
         [Key]
         public int CustomerKey { get; set; }
         public string CustomerID { get; set; }
-        public string CompanyName { get; set; }
+        public string? CompanyName { get; set; }
     }
 }

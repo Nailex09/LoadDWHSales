@@ -11,21 +11,28 @@ namespace LoadDWHSales.WorkerService
         {
             CreateHostBuilder(args).Build().Run();
         }
-        public static IHostBuilder CreateHostBuilder(string[] args)
-        {
-            return Host.CreateDefaultBuilder(args)
-            .ConfigureServices((hostContext, services) =>
-            {
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+     Host.CreateDefaultBuilder(args)
+         .ConfigureAppConfiguration((context, config) =>
+         {
+             var env = context.HostingEnvironment;
+             config.SetBasePath(Directory.GetCurrentDirectory())
+                   .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                   .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
+         })
+         .ConfigureServices((hostContext, services) =>
+         {
+             // Configuración de los DbContexts
+             services.AddDbContext<NorthwindContext>(options =>
+                 options.UseSqlServer(hostContext.Configuration.GetConnectionString("Northwind"))); // Verifica este nombre
 
-                services.AddDbContextPool<NorthwindContext>(options =>
-                                                            options.UseSqlServer(hostContext.Configuration.GetConnectionString("Northwind")));
+             services.AddDbContext<DbSalesContext>(options =>
+                                                   options.UseSqlServer(hostContext.Configuration.GetConnectionString("DWHNorthwind")));
 
-                services.AddDbContextPool<DbSalesContext>(options =>
-                                                          options.UseSqlServer(hostContext.Configuration.GetConnectionString("DWHNorthwind")));
+             // Registro de servicios
+             services.AddScoped<IDataServiceDwVentas, DataServiceDwVentas>();
+             services.AddHostedService<Worker>();
+         });
 
-                services.AddScoped<IDataServiceDwVentas, DataServiceDwVentas>();
-                services.AddHostedService<Worker>();
-            });
-        }
     }
 }

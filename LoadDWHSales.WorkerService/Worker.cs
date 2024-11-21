@@ -8,34 +8,47 @@ namespace LoadDWHSales.WorkerService
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
+        private readonly IServiceProvider _serviceProvider;
         private readonly IConfiguration _configuration;
-        private readonly IServiceScopeFactory _scopeFactory;
 
-        public Worker(ILogger<Worker> logger, IConfiguration configuration, IServiceScopeFactory scopeFactory)
+        public Worker(ILogger<Worker> logger, IServiceProvider serviceProvider, IConfiguration configuration)
         {
             _logger = logger;
+            _serviceProvider = serviceProvider;  // Inyección de IServiceProvider para crear scope
             _configuration = configuration;
-            _scopeFactory = scopeFactory;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Starting data load process...");
-            using var scope = _scopeFactory.CreateScope();
-            var dataService = scope.ServiceProvider.GetRequiredService<IDataServiceDwVentas>();
-
-            var result = await dataService.LoadDHW();
-
-            if (result.Success)
+            // Crear un nuevo scope para resolver dependencias scoped
+            using (var scope = _serviceProvider.CreateScope())
             {
-                _logger.LogInformation("Data loading completed successfully.");
-            }
-            else
-            {
-                _logger.LogError($"Data loading failed: {result.Message}");
+                // Resolver IDataServiceDwVentas dentro de este scope
+                var dataService = scope.ServiceProvider.GetRequiredService<IDataServiceDwVentas>();
+
+                try
+                {
+                    _logger.LogInformation("Starting data load process...");
+
+                    // Llamar al servicio para cargar los datos
+                    var result = await dataService.LoadDHW();
+                    if (result.Success)
+                    {
+                        _logger.LogInformation("Data load completed successfully.");
+                    }
+                    else
+                    {
+                        _logger.LogError($"Data load failed: {result.Message}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error during data load: {ex.Message}");
+                }
             }
         }
-
-
     }
 }
+
+
+

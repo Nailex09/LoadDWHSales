@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LoadDWHSales.Data.Entities.northwind
+namespace LoadDWHSales.Data.Entities.Northwind
 {
     public class Category
     {

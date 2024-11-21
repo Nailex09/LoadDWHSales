@@ -21,21 +21,13 @@ namespace LoadDWHSales.Data.DataServiceDwVentas
 
         public async Task<OperactionResult> LoadDHW()
         {
-            var result = new OperactionResult();
+            OperactionResult result = new OperactionResult();
+
             try
             {
-                // Ejecutar las cargas de dimensiones
-                var employeeResult = await LoadDimEmployee();
-                if (!employeeResult.Success) throw new Exception(employeeResult.Message);
-
-                var productCategoryResult = await LoadDimProductCategory();
-                if (!productCategoryResult.Success) throw new Exception(productCategoryResult.Message);
-
-                var customerResult = await LoadDimCustomers();
-                if (!customerResult.Success) throw new Exception(customerResult.Message);
-
-                var shipperResult = await LoadDimShippers();
-                if (!shipperResult.Success) throw new Exception(shipperResult.Message);
+                await LimpiarDatos();
+                await LoadDimEmployees();
+                await LoadDimProductCategory();
             }
             catch (Exception ex)
             {
@@ -45,31 +37,41 @@ namespace LoadDWHSales.Data.DataServiceDwVentas
             return result;
         }
 
+        private async Task LimpiarDatos()
+        {
+            var query = "EXEC dbo.LimpiarDatos";
+            await _dbSalesContext.Database.ExecuteSqlRawAsync(query);
+        }
 
-        private async Task<OperactionResult> LoadDimEmployee()
+
+        private async Task<OperactionResult> LoadDimEmployees()
         {
             var result = new OperactionResult();
             try
             {
                 var employees = await _northwindContext.Employees
                     .AsNoTracking()
-                    .Select(emp => new DimEmployee
+                    .Select(emp => new DimEmployees
                     {
-                        EmployeeID = emp.EmployeeID, // ID original
-                        EmployeeName = emp.EmployeeName // Asegúrate de que EmployeeName exista en el modelo
+                        EmployeeID = emp.EmployeeID,
+                        EmployeeName = $"{emp.FirstName} {emp.LastName}"
                     })
                     .ToListAsync();
 
                 await _dbSalesContext.Employees.AddRangeAsync(employees);
                 await _dbSalesContext.SaveChangesAsync();
+
+                result.Success = true;
+                result.Message = "DimEmployees loaded successfully.";
             }
             catch (Exception ex)
             {
                 result.Success = false;
-                result.Message = $"Error loading DimEmployee: {ex.Message}";
+                result.Message = $"Error loading DimEmployees: {ex.Message}";
             }
             return result;
         }
+
 
 
 
@@ -81,12 +83,14 @@ namespace LoadDWHSales.Data.DataServiceDwVentas
                 var productCategories = await (from product in _northwindContext.Products
                                                join category in _northwindContext.Categories
                                                on product.CategoryID equals category.CategoryID
-                                               select new DimProductCategory
+                                               select new DimProductCategory()
                                                {
+                                                   // Asegurarse de que ProductKey sea la clave primaria
                                                    CategoryID = category.CategoryID,
                                                    ProductName = product.ProductName,
                                                    CategoryName = category.CategoryName,
                                                    Productid = product.ProductID
+
                                                })
                                                .AsNoTracking()
                                                .ToListAsync();
@@ -101,6 +105,8 @@ namespace LoadDWHSales.Data.DataServiceDwVentas
             }
             return result;
         }
+
+
 
 
         private async Task<OperactionResult> LoadDimCustomers()
